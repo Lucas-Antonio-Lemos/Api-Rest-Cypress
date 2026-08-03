@@ -1,0 +1,93 @@
+DOCUMENTAÇÃO - API Node.js + PostgreSQL
+---------------------------------------
+
+1. Configuração Inicial
+-----------------------
+- Servidor criado com Node.js e Express.
+- Porta utilizada: 1001.
+- Conexão com banco de dados PostgreSQL através do módulo 'pg' (arquivo db.js).
+- Tabela utilizada: Employes.
+
+2. Middlewares
+--------------
+- app.use(express.json()) → permite trabalhar com JSON no corpo das requisições.
+- app.use(express.urlencoded({ extended: true })) → permite trabalhar com dados enviados via formulário.
+
+3. Rotas da API
+---------------
+
+(1) Rota inicial
+----------------
+GET /
+- Retorna mensagem simples para confirmar que o servidor está ativo.
+- Exemplo de resposta:
+  { "message": "Servidor express!" }
+
+(2) Criar usuário
+-----------------
+POST /api/users
+- Recebe name, email e password no corpo da requisição.
+- Valida se todos os campos foram enviados.
+- Executa query:
+  INSERT INTO Employes (name, email, password) VALUES ($1, $2, $3) RETURNING *
+- Retorna status 201 e o usuário inserido.
+- Exemplo de resposta:
+  {
+    "message": "Cadastro realizado com sucesso!",
+    "user": [ { id: 1, name: "Lukas", email: "lukas@email.com", password: "123456" } ]
+  }
+
+(3) Listar usuários
+-------------------
+GET /api/users
+- Executa query:
+  SELECT * FROM Employes
+- Retorna todos os registros da tabela.
+- Exemplo de resposta:
+  [
+    { id: 1, name: "Lukas", email: "lukas@email.com", password: "123456" },
+    { id: 2, name: "Bruno", email: "bruno@email.com", password: "abc123" }
+  ]
+
+(4) Atualizar usuário
+---------------------
+PUT /api/users/:id
+- Recebe o id pela URL e novos dados no corpo da requisição.
+- Executa query:
+  UPDATE Employes SET name=$1, email=$2, password=$3 WHERE id=$4 RETURNING *
+- Se não encontrar o usuário, retorna status 404.
+- Se atualizar, retorna o usuário atualizado.
+- Exemplo de resposta:
+  {
+    "message": "Usuário atualizado com sucesso!",
+    "user": { id: 1, name: "Lukas Atualizado", email: "lukas@email.com", password: "novaSenha" }
+  }
+
+(5) Deletar usuário
+-------------------
+DELETE /api/users/:id
+- Recebe o id pela URL.
+- Executa query:
+  DELETE FROM Employes WHERE id=$1 RETURNING *
+- Se não encontrar o usuário, retorna status 404.
+- Se remover, retorna mensagem de sucesso.
+- Exemplo de resposta:
+  { "message": "Usuário removido com sucesso!" }
+
+4. Tratamento de Erros
+----------------------
+- Status 400 → quando campos obrigatórios não são enviados.
+- Status 404 → quando o usuário não é encontrado para atualização ou exclusão.
+- Status 500 → quando ocorre erro interno no servidor ou no banco de dados.
+
+5. Execução do Servidor
+-----------------------
+- Comando para iniciar:
+  node index.js
+- Mensagem exibida no terminal:
+  "Servidor online na porta 1001"
+
+---------------------------------------
+STATUS: API completa com CRUD (POST, GET,
+PUT, DELETE) integrada ao PostgreSQL.
+---------------------------------------

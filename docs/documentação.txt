@@ -1,0 +1,92 @@
+DOCUMENTAÇÃO - API Node.js + PostgreSQL
+---------------------------------------
+
+1. Configuração do Banco de Dados
+---------------------------------
+- Banco criado: DB
+- Tabela criada: Employes
+- Estrutura da tabela:
+
+CREATE TABLE Employes (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(150) UNIQUE NOT NULL,
+  password VARCHAR(200) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+2. Configuração da Conexão com PostgreSQL
+-----------------------------------------
+Arquivo: db.js
+
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  user: 'postgres',       // usuário do PostgreSQL
+  host: 'localhost',
+  database: 'DB',         // nome do banco
+  password: '32322872',   // senha definida na instalação
+  port: 5432,             // porta padrão
+});
+
+module.exports = pool;
+
+3. API com Express
+------------------
+Arquivo: index.js
+
+const pool = require('./db');
+const express = require('express');
+const app = express();
+const porta = 1001;
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Rota inicial
+app.get('/', (req, res) => {
+  res.json({ message: 'Servidor express!' });
+});
+
+// Rota POST para cadastrar usuário
+app.post('/api/users', async (req, res) => {
+  const { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: 'Todos os campos são obrigatórios!' });
+  }
+
+  try {
+    const result = await pool.query(
+      'INSERT INTO Employes (name, email, password) VALUES ($1, $2, $3) RETURNING *',
+      [name, email, password]
+    );
+    res.status(201).json({ message: 'Cadastro realizado com sucesso!', user: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao cadastrar usuário' });
+  }
+});
+
+app.listen(porta, () => {
+  console.log(`Servidor online na porta ${porta}`);
+});
+
+4. Teste da API
+---------------
+- Servidor iniciado com: node index.js
+- Endpoint: POST http://localhost:1001/api/users
+- Exemplo de corpo da requisição (JSON):
+
+{
+  "name": "Lukas",
+  "email": "lukas@email.com",
+  "password": "123456"
+}
+
+- Resultado: Usuário inserido na tabela Employes e retornado na resposta.
+
+---------------------------------------
+STATUS: API funcionando com rota POST e
+persistência de dados no PostgreSQL.
+---------------------------------------
