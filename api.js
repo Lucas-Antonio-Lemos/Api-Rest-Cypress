@@ -12,80 +12,107 @@ app.get('/', (req, res) => {
   res.json({ message: 'Servidor express!' })
 });
 
-app.post('/api/users', async (req, res) => {
-  const { name, email, password } = req.body;
+// CREATE
+app.post('/api/employes', async (req, res) => {
+  const {
+    nome_completo,
+    email,
+    telefone,
+    cpf,
+    data_nascimento,
+    cep,
+    endereco,
+    numero,
+    complemento,
+    bairro,
+    cidade
+  } = req.body;
 
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'Todos os campos são obrigatórios!' });
+  if (!nome_completo || !email || !cpf) {
+    return res.status(400).json({ error: 'Nome, email e CPF são obrigatórios!' });
   }
 
   try {
     const result = await pool.query(
-      'INSERT INTO Employes (name, email, password) VALUES ($1, $2, $3) RETURNING *',
-      [name, email, password]
+      `INSERT INTO employes 
+        (nome_completo, email, telefone, cpf, data_nascimento, cep, endereco, numero, complemento, bairro, cidade) 
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+      [nome_completo, email, telefone, cpf, data_nascimento, cep, endereco, numero, complemento, bairro, cidade]
     );
-    res.status(201).json({ message: 'Cadastro realizado com sucesso!', user: result.rows });
+    res.status(201).json({ message: 'Cadastro realizado com sucesso!', employe: result.rows[0] });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Erro ao cadastrar usuário' });
+    res.status(500).json({ error: 'Erro ao cadastrar cliente' });
   }
-})
+});
 
-app.get('/api/users', async (req, res) => {
+// READ
+app.get('/api/employes', async (req, res) => {
   try {
-    // Faz a consulta no banco
-    const result = await pool.query('SELECT * FROM Employes ORDER BY id ASC')
-
-    // Retorna todos os registros em formato JSON
-    res.json(result.rows)
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Erro ao buscar usuários' })
-  }
-})
-
-app.put('/api/users/:id', async (req, res) => {
-  const { id } = req.params; // pega o id da URL
-  const { name, email, password } = req.body; // pega os dados enviados no corpo da requisição
-
-  try {
-    const result = await pool.query(
-      'UPDATE Employes SET name=$1, email=$2, password=$3 WHERE id=$4 RETURNING *',
-      [name, email, password, id]
-    )
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Usuário não encontrado' })
-    }
-
-    res.json({ message: 'Usuário atualizado com sucesso!', user: result.rows[0] })
+    const result = await pool.query('SELECT * FROM employes ORDER BY id ASC');
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Erro ao atualizar usuário' })
+    res.status(500).json({ error: 'Erro ao buscar clientes' });
   }
-})
+});
 
-app.delete('/api/users/:id', async (req, res) => {
-  const id = req.params.id
+// UPDATE
+app.put('/api/employes/:id', async (req, res) => {
+  const { id } = req.params;
+  const {
+    nome_completo,
+    email,
+    telefone,
+    cpf,
+    data_nascimento,
+    cep,
+    endereco,
+    numero,
+    complemento,
+    bairro,
+    cidade
+  } = req.body;
 
   try {
     const result = await pool.query(
-      'DELETE FROM Employes WHERE id=$1 RETURNING *',
-      [id]
+      `UPDATE employes SET 
+        nome_completo=$1, email=$2, telefone=$3, cpf=$4, data_nascimento=$5,
+        cep=$6, endereco=$7, numero=$8, complemento=$9, bairro=$10, cidade=$11
+       WHERE id=$12 RETURNING *`,
+      [nome_completo, email, telefone, cpf, data_nascimento, cep, endereco, numero, complemento, bairro, cidade, id]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Usuário não encontrado' })
+      return res.status(404).json({ error: 'Cliente não encontrado' });
     }
 
-    res.status(200).json({ message: 'Usuário removido com sucesso!' })
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Erro ao deletar usuário' })
+    res.json({ message: 'Cliente atualizado com sucesso!', employe: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao atualizar cliente' });
   }
-})
+});
 
+// DELETE
+app.delete('/api/employes/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query('DELETE FROM employes WHERE id=$1 RETURNING *', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Cliente não encontrado' });
+    }
+
+    res.status(200).json({ message: 'Cliente removido com sucesso!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao deletar cliente' });
+  }
+});
 
 app.listen(porta, () => {
   console.log(`Servidor online na porta ${porta}`)
-})
+});
+
